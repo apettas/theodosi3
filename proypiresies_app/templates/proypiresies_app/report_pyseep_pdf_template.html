@@ -1,0 +1,93 @@
+<!-- proypiresies_app/templates/proypiresies_app/report_pyseep_pdf_template.html -->
+<!DOCTYPE html>
+<html lang="el">
+<head>
+    <meta charset="UTF-8">
+    <title>Αναφορά ΠΥΣΕΕΠ {{ pyseep_instance.arithmos_praxis }}</title>
+    <style>
+        body { font-family: DejaVu Sans, sans-serif; /* Καλή γραμματοσειρά για ελληνικά σε PDF */ margin: 20px; }
+        h1, h2 { text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 9pt; }
+        th, td { border: 1px solid black; padding: 5px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .no-break { page-break-inside: avoid; }
+        .header-info { margin-bottom: 30px; text-align: center; }
+        .signature-section { margin-top: 50px; page-break-inside: avoid; }
+    </style>
+</head>
+<body>
+    <div class="header-info">
+        ΕΛΛΗΝΙΚΗ ΔΗΜΟΚΡΑΤΙΑ<br>
+        ΥΠΟΥΡΓΕΙΟ ΠΑΙΔΕΙΑΣ, ΘΡΗΣΚΕΥΜΑΤΩΝ ΚΑΙ ΑΘΛΗΤΙΣΜΟΥ<br>
+        ΠΕΡΙΦΕΡΕΙΑΚΗ Δ/ΝΣΗ Π. & Δ. ΕΚΠ/ΣΗΣ ΔΥΤΙΚΗΣ ΕΛΛΑΔΑΣ<br>
+        ΠΡΑΞΗ: {{ pyseep_instance.arithmos_praxis }} / {{ pyseep_instance.imerominia_praxis|date:"d-m-Y" }}<br>
+        Ημερομηνία Αναφοράς: {{ current_date|date:"d-m-Y" }}
+    </div>
+
+    <h2>ΚΑΤΑΣΤΑΣΗ ΑΝΑΓΝΩΡΙΣΗΣ ΠΡΟΫΠΗΡΕΣΙΩΝ</h2>
+
+    {% regroup aitiseis by ypiresia_trexousas_topothetisis as aitiseis_by_ypiresia %}
+
+    {% for ypiresia_group in aitiseis_by_ypiresia %}
+        <div class="no-break">
+            <h3>Υπηρεσία Τοποθέτησης: {{ ypiresia_group.grouper.onomasia }}</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Α/Α</th>
+                        <th>Επώνυμο</th>
+                        <th>Όνομα</th>
+                        <th>Πατρώνυμο</th>
+                        <th>Ειδικότητα</th>
+                        <th>Σχ. Έτος Αίτησης</th>
+                        <th>Είδος Προϋπ.</th>
+                        <th>Αρ. Πρωτ.</th>
+                        <th>Σχέση Εργ.</th>
+                        <th>Από</th>
+                        <th>Έως</th>
+                        <th>Έτη</th>
+                        <th>Μήνες</th>
+                        <th>Μέρες</th>
+                        <th>Παρατηρήσεις</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for aitisi in ypiresia_group.list %}
+                        {% with relevant_proys=relevant_proypiresies_for_aitisi|get_item:aitisi.id %}
+                            {% if relevant_proys %}
+                                {% for proy in relevant_proys %}
+                                <tr>
+                                    {% if forloop.first %}
+                                        <td rowspan="{{ relevant_proys|length }}">{{ forloop.parentloop.counter }}</td>
+                                        <td rowspan="{{ relevant_proys|length }}">{{ aitisi.ekpaideftikos.eponymo }}</td>
+                                        <td rowspan="{{ relevant_proys|length }}">{{ aitisi.ekpaideftikos.onoma }}</td>
+                                        <td rowspan="{{ relevant_proys|length }}">{{ aitisi.ekpaideftikos.patronymo }}</td>
+                                        <td rowspan="{{ relevant_proys|length }}">{{ aitisi.ekpaideftikos.eidikotita.eidikotita_sintomi }}</td>
+                                        <td rowspan="{{ relevant_proys|length }}">{{ aitisi.sxoliko_etos }}</td>
+                                    {% endif %}
+                                    <td>{{ proy.eidos_proypiresias.perigrafi }}</td>
+                                    <td>{{ proy.arithmos_protokollou_vevaiosis }}</td>
+                                    <td>{{ proy.sxesi_ergasias.perigrafi }}</td>
+                                    <td>{{ proy.xroniko_diastima_apo|date:"d/m/y" }}</td>
+                                    <td>{{ proy.xroniko_diastima_eos|date:"d/m/y" }}</td>
+                                    <td>{{ proy.eti_proypiresias }}</td>
+                                    <td>{{ proy.mines_proypiresias }}</td>
+                                    <td>{{ proy.meres_proypiresias }}</td>
+                                    <td>{{ proy.paratiriseis|default_if_none:"" }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endfor %}
+
+    <div class="signature-section">
+        <p style="text-align: right; margin-top: 100px;">Ο/Η Προϊστάμενος/η</p>
+        <p style="text-align: right; margin-top: 50px;">(Υπογραφή - Σφραγίδα)</p>
+    </div>
+
+</body>
+</html>

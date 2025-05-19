@@ -1,0 +1,75 @@
+<!-- templates/proypiresies_app/aitisi_form.html -->
+{% extends "proypiresies_app/base.html" %}
+{% load static %} {# Βεβαιωθείτε ότι είναι εδώ αν χρησιμοποιείτε static σε αυτό το αρχείο #}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ form_title }}</h2>
+    <hr>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="card mb-3">
+            <div class="card-header">
+                Στοιχεία Αίτησης
+            </div>
+            <div class="card-body">
+                {{ form|crispy }}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                Προϋπηρεσίες
+            </div>
+            <div class="card-body">
+                {{ proypiresies_formset.management_form }}
+                {% for proy_form in proypiresies_formset %}
+                    <div class="proypiresia-formset-row mb-3 p-3 border rounded">
+                        {% if proy_form.instance.pk %}
+                            <p><strong>Προϋπηρεσία ID: {{ proy_form.instance.pk }}</strong></p>
+                        {% endif %}
+                        {{ proy_form|crispy }}
+                        {% if proy_form.instance.pk and proy_form.instance.elegxthike %}
+                            <small class="form-text text-muted">
+                                Ελέγχθηκε από: {{ proy_form.instance.elegxthike_apo.username|default:"-" }}
+                                στις: {{ proy_form.instance.elegxthike_pote|date:"d/m/Y H:i"|default:"-" }}
+                            </small>
+                        {% endif %}
+                         {% if proy_form.can_delete %}
+                            <div class="form-check mt-2">
+                                {{ proy_form.DELETE }}
+                                <label class="form-check-label" for="{{ proy_form.DELETE.id_for_label }}">Διαγραφή αυτής της προϋπηρεσίας</label>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% if not forloop.last %}<hr>{% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-3">Αποθήκευση</button>
+        {% if object %}
+        <a href="{% url 'proypiresies_app:aitisi_detail' object.pk %}" class="btn btn-secondary mt-3">Άκυρο</a>
+        {% else %}
+        <a href="{% url 'proypiresies_app:aitisi_list' %}" class="btn btn-secondary mt-3">Άκυρο</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Για δυναμική προσθήκη/αφαίρεση formsets με JavaScript (π.χ. με django-dynamic-formset) -->
+<!-- <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script> -->
+<!-- <script src="{% static 'js/jquery.formset.js' %}"></script> -->
+<!-- <script type="text/javascript">
+    // $(function() {
+    //     $('.proypiresia-formset-row').formset({
+    //         prefix: '{{ proypiresies_formset.prefix }}',
+    //         addText: 'Προσθήκη Προϋπηρεσίας',
+    //         deleteText: 'Αφαίρεση'
+    //     });
+    // })
+</script> -->
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "proypiresies_app/base.html" %}
+{% load static %} {# Αν χρειάζεστε static files σε αυτό το template #}
+{% load proypiresies_extras %} {# <--- ΦΟΡΤΩΣΗ ΤΩΝ CUSTOM TAGS/FILTERS #}
+
+{% block title %}Λεπτομέρειες Αίτησης #{{ aitisi.id }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Λεπτομέρειες Αίτησης #{{ aitisi.id }}</h2>
+        <div>
+            <a href="{% url 'proypiresies_app:aitisi_update' aitisi.pk %}" class="btn btn-warning">Επεξεργασία Αίτησης</a>
+            <a href="{% url 'proypiresies_app:aitisi_list' %}" class="btn btn-secondary">Επιστροφή στη Λίστα</a>
+        </div>
+    </div>
+    <hr>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Στοιχεία Εκπαιδευτικού & Αίτησης</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>Εκπαιδευτικός:</strong> {{ aitisi.ekpaideftikos.eponymo }} {{ aitisi.ekpaideftikos.onoma }} ({{ aitisi.ekpaideftikos.patronymo }})</p>
+            <p><strong>Ειδικότητα:</strong> {{ aitisi.ekpaideftikos.eidikotita.eidikotita_pliris }} ({{ aitisi.ekpaideftikos.eidikotita.eidikotita_sintomi }})</p>
+            <p><strong>Σχολικό Έτος Αίτησης:</strong> {{ aitisi.sxoliko_etos }}</p>
+            <p><strong>Τύπος Εκπαιδευτικού:</strong> {{ aitisi.get_typos_ekpaideftikou_display }}</p>
+            <p><strong>Υπηρεσία Τρέχουσας Τοποθέτησης:</strong> {{ aitisi.ypiresia_trexousas_topothetisis.onomasia }}</p>
+            <p><strong>Ημερομηνία Υποβολής:</strong> {{ aitisi.imerominia_ypovolis|date:"d/m/Y"|default:"Δεν έχει οριστεί" }}</p>
+            {% if aitisi.arxeio_aitisis_pdf %}
+                <p><strong>Αρχείο Αίτησης:</strong> <a href="{{ aitisi.arxeio_aitisis_pdf.url }}" target="_blank">Προβολή PDF</a></p>
+            {% endif %}
+            <p><strong>Κατάσταση:</strong>
+                {% if aitisi.se_anamoni %}
+                    <span class="badge bg-warning text-dark">Σε Αναμονή Δικαιολογητικών</span>
+                {% elif aitisi.pyseep_proothisis and not aitisi.pyseep_teliki_apofasi %}
+                    <span class="badge bg-info text-dark">Προωθήθηκε στο ΠΥΣΕΕΠ: {{ aitisi.pyseep_proothisis }}</span>
+                {% elif aitisi.pyseep_teliki_apofasi %}
+                    <span class="badge bg-success">Τελική Απόφαση ΠΥΣΕΕΠ: {{ aitisi.pyseep_teliki_apofasi }}</span>
+                {% else %}
+                    <span class="badge bg-secondary">Νέα Αίτηση</span>
+                {% endif %}
+            </p>
+            {% if not aitisi.pyseep_teliki_apofasi and aitisi.pyseep_proothisis %}
+                <a href="{% url 'proypiresies_app:aitisi_teliki_egkrisi' aitisi.pk %}" class="btn btn-success mt-2">Καταχώρηση Τελικής Απόφασης ΠΥΣΕΕΠ</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <h4>Καταχωρημένες Προϋπηρεσίες</h4>
+    {% if proypiresies %}
+        <table class="table table-bordered table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Είδος Προϋπηρεσίας</th>
+                    <th>Αρ. Πρωτ./Βεβ.</th>
+                    <th>Σχέση Εργασίας</th>
+                    <th>Από</th>
+                    <th>Έως</th>
+                    <th>Έτη</th>
+                    <th>Μήνες</th>
+                    <th>Μέρες</th>
+                    <th>Ελέγχθηκε</th>
+                    <th>Παρατηρήσεις</th>
+                    <th>Ιστορικό ΠΥΣΕΕΠ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for proy in proypiresies %} {# Εδώ χρησιμοποιούμε τη μεταβλητή 'proypiresies' από το context #}
+                <tr>
+                    <td>{{ proy.eidos_proypiresias.perigrafi }}</td>
+                    <td>{{ proy.arithmos_protokollou_vevaiosis }}</td>
+                    <td>{{ proy.sxesi_ergasias.perigrafi }}</td>
+                    <td>{{ proy.xroniko_diastima_apo|date:"d/m/Y" }}</td>
+                    <td>{{ proy.xroniko_diastima_eos|date:"d/m/Y" }}</td>
+                    <td>{{ proy.eti_proypiresias }}</td>
+                    <td>{{ proy.mines_proypiresias }}</td>
+                    <td>{{ proy.meres_proypiresias }}</td>
+                    <td>
+                        {% if proy.elegxthike %}
+                            <span class="badge bg-success">ΝΑΙ</span>
+                            <small class="d-block">Από: {{ proy.elegxthike_apo.username|default:"-" }}</small>
+                            <small class="d-block">Στις: {{ proy.elegxthike_pote|date:"d/m/Y H:i"|default:"-" }}</small>
+                        {% else %}
+                            <span class="badge bg-danger">ΟΧΙ</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ proy.paratiriseis|default_if_none:"" }}</td>
+                    <td>
+                        {% with history_entries=proypiresia_history|get_item:proy.id %}
+                            {% if history_entries %}
+                                <ul class="list-unstyled mb-0">
+                                {% for entry in history_entries %}
+                                    <li><small>{{ entry.pyseep_apofasis }} ({{ entry.imerominia_egkrisis_apo_pyseep|date:"d/m/Y" }})</small></li>
+                                {% endfor %}
+                                </ul>
+                            {% else %}
+                                <small>-</small>
+                            {% endif %}
+                        {% endwith %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Δεν έχουν καταχωρηθεί προϋπηρεσίες για αυτή την αίτηση που να μην έχουν παραβλεφθεί.</p>
+    {% endif %}
+</div>
+
+{# Για να δουλέψει το custom filter get_item, πρέπει να το έχετε ορίσει #}
+{# Αν δεν το έχετε, μπορείτε να κάνετε την επεξεργασία στη view και να περάσετε ένα πιο έτοιμο context #}
+
+{% endblock %}
